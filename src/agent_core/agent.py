@@ -10,6 +10,7 @@ from typing import Self
 from agent_core.config import AgentConfig
 from agent_core.control.policies import ToolPolicy
 from agent_core.llm.base import LLMProvider
+from agent_core.loop.plan_execute import PlanExecuteLoop
 from agent_core.loop.react import ReActLoop
 from agent_core.memory.base import MemoryStore
 from agent_core.memory.buffer import BufferMemory
@@ -86,7 +87,8 @@ class Agent:
 
         memory = self._memory or self._build_memory(tracer)
         policy = ToolPolicy(self._config, {spec.name: spec for spec in self.registry.list_specs()})
-        loop = ReActLoop(
+        loop_cls = PlanExecuteLoop if self._config.loop == "plan_execute" else ReActLoop
+        loop = loop_cls(
             config=self._config,
             llm=self._llm,
             registry=self.registry,

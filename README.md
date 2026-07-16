@@ -48,9 +48,11 @@ async with Agent(config, OpenAIProvider()) as agent:
 print(result.status, result.final_answer)
 ```
 
-## The loop
+## The loops
 
-One run = one `AgentState` (single source of truth). Each step:
+Two interchangeable loops, selected via `loop: react | plan_execute` in config.
+
+**ReAct** (default): one run = one `AgentState` (single source of truth). Each step:
 
 1. `memory.load(state)` — messages for the LLM (trimmed / summarized).
 2. `llm.complete(messages, tools)` — tools filtered by policy.
@@ -62,6 +64,11 @@ One run = one `AgentState` (single source of truth). Each step:
 Stop conditions: final answer, `max_steps`, budgets (tool calls / tokens / $),
 unrecoverable LLM error after retries, or `needs_input` when a dangerous tool
 awaits human confirmation.
+
+**Plan-Execute**: the model first produces a JSON plan (traced as
+`plan.created`), then works through each task with focused ReAct turns
+(`plan.task_started` / `plan.task_finished`), and finishes with a final-answer
+turn. Steps and budgets are shared with ReAct, so the same guardrails apply.
 
 ## Traces
 
@@ -134,5 +141,5 @@ UPDATE_GOLDEN=1 pytest tests/test_golden_traces.py   # regenerate golden traces
 
 ## Roadmap
 
-- v1.1: `plan_execute` loop, `agent-core replay` diffing
+- v1.1: `agent-core replay` diffing
 - v2: vector memory, HTTP API (`needs_input` → `POST /runs/{id}/confirm`), OTel export

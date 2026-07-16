@@ -79,6 +79,22 @@ async def test_golden_deny_policy(config: AgentConfig, tmp_path):
     check_golden("deny_policy", events)
 
 
+async def test_golden_plan_execute(config: AgentConfig, tmp_path):
+    config.tracing_path = tmp_path / "traces"
+    config.loop = "plan_execute"
+    script = [
+        assistant(content='["calculate 2+2", "report the result"]'),
+        assistant(
+            tool_calls=[ToolCall(id="c1", name="calculator", arguments={"expression": "2+2"})]
+        ),
+        assistant(content="Calculated: 4"),
+        assistant(content="Result reported: 4"),
+        assistant(content="2+2 equals 4."),
+    ]
+    events = await run_and_normalize(config, script, "What is 2+2? Report the result.")
+    check_golden("plan_execute", events)
+
+
 async def test_golden_max_steps(config: AgentConfig, tmp_path):
     config.tracing_path = tmp_path / "traces"
     config.max_steps = 2

@@ -1,4 +1,4 @@
-{"payload": {"config_digest": "<volatile>", "goal": "What is 2+2?", "model": "scripted"}, "schema_version": "1.0", "step": 0, "type": "run.started"}
+{"payload": {"config_digest": "<volatile>", "goal": "What is 2+2?", "loop": "react", "model": "scripted"}, "schema_version": "1.0", "step": 0, "type": "run.started"}
 {"payload": {"step": 1}, "schema_version": "1.0", "step": 1, "type": "step.started"}
 {"payload": {"content_preview": null, "finish_reason": "stop", "has_tool_calls": true, "model": "scripted", "usage": {"in": 10, "out": 5}}, "schema_version": "1.0", "step": 1, "type": "llm.completed"}
 {"payload": {"name": "calculator", "reason": "denied by policy"}, "schema_version": "1.0", "step": 1, "type": "policy.denied"}
