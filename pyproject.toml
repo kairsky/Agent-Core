@@ -20,7 +20,8 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
 mcp = ["mcp>=1.0"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "ruff>=0.6"]
+api = ["fastapi>=0.115", "uvicorn>=0.30"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "ruff>=0.6", "fastapi>=0.115"]
 
 [project.scripts]
 agent-core = "agent_core.cli:main"

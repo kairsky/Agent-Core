@@ -74,21 +74,52 @@ class Agent:
             await connection.close()
         self._connections.clear()
 
-    async def run(self, goal: str, *, session_messages: list[Message] | None = None) -> AgentResult:
-        run_id = str(uuid.uuid4())
-        trace_path: Path | None = None
-        tracer: Tracer = NullTracer()
-        if self._trace_dir is not None:
-            trace_path = self._trace_dir / f"{run_id}.jsonl"
-            tracer = RedactingTracer(JsonlTracer(trace_path))
-
+    def prepare_state(
+        self, goal: str, *, session_messages: list[Message] | None = None
+    ) -> AgentState:
+        """Create the initial run state. Exposed so callers (API) can observe it live."""
         messages = [system(self._config.system_prompt), *(session_messages or []), user(goal)]
-        state = AgentState(run_id=run_id, goal=goal, messages=messages)
+        return AgentState(run_id=str(uuid.uuid4()), goal=goal, messages=messages)
 
+    async def run(self, goal: str, *, session_messages: list[Message] | None = None) -> AgentResult:
+        state = self.prepare_state(goal, session_messages=session_messages)
+        return await self.run_state(state)
+
+    async def run_state(self, state: AgentState) -> AgentResult:
+        tracer = self._make_tracer(state.run_id)
+        loop = self._build_loop(tracer)
+        try:
+            state = await loop.run(state)
+        finally:
+            await tracer.close()
+        return self._result(state)
+
+    async def resume(self, state: AgentState, approved: bool) -> AgentResult:
+        """Continue a run paused on needs_input; the trace file is appended to."""
+        if self._config.loop != "react":
+            raise NotImplementedError("resume is supported for the react loop only")
+        tracer = self._make_tracer(state.run_id)
+        loop = self._build_loop(tracer)
+        try:
+            state = await loop.resume(state, approved)
+        finally:
+            await tracer.close()
+        return self._result(state)
+
+    def trace_path_for(self, run_id: str) -> Path | None:
+        return self._trace_dir / f"{run_id}.jsonl" if self._trace_dir is not None else None
+
+    def _make_tracer(self, run_id: str) -> Tracer:
+        trace_path = self.trace_path_for(run_id)
+        if trace_path is None:
+            return NullTracer()
+        return RedactingTracer(JsonlTracer(trace_path))
+
+    def _build_loop(self, tracer: Tracer) -> ReActLoop | PlanExecuteLoop:
         memory = self._memory or self._build_memory(tracer)
         policy = ToolPolicy(self._config, {spec.name: spec for spec in self.registry.list_specs()})
         loop_cls = PlanExecuteLoop if self._config.loop == "plan_execute" else ReActLoop
-        loop = loop_cls(
+        return loop_cls(
             config=self._config,
             llm=self._llm,
             registry=self.registry,
@@ -98,17 +129,14 @@ class Agent:
             tracer=tracer,
             confirm=self._confirm,
         )
-        try:
-            state = await loop.run(state)
-        finally:
-            await tracer.close()
 
+    def _result(self, state: AgentState) -> AgentResult:
         return AgentResult(
-            run_id=run_id,
+            run_id=state.run_id,
             status=state.status,
             final_answer=state.final_answer if state.status == "succeeded" else None,
             state=state,
-            trace_path=trace_path,
+            trace_path=self.trace_path_for(state.run_id),
         )
 
     def _build_memory(self, tracer: Tracer) -> MemoryStore:

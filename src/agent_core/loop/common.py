@@ -111,9 +111,19 @@ class LoopBase:
         return assistant
 
     async def _handle_tool_calls(
-        self, state: AgentState, calls: list[ToolCall], new_messages: list
+        self,
+        state: AgentState,
+        calls: list[ToolCall],
+        new_messages: list,
+        decisions: dict[str, bool] | None = None,
     ) -> StopReason | None:
+        """Execute one batch of tool calls.
+
+        `decisions` carries already-made HITL verdicts (tool_call_id -> approved),
+        used when resuming a run that paused on needs_input.
+        """
         calls = calls[: self._config.max_tool_calls_per_step]
+        decisions = decisions or {}
         ctx = ToolContext(
             run_id=state.run_id,
             step=state.step,
@@ -134,6 +144,18 @@ class LoopBase:
                 )
                 continue
             if self._policy.needs_confirmation(call.name, call.arguments):
+                if call.id in decisions:
+                    approved = decisions[call.id]
+                    await self._emit(
+                        state, EventType.POLICY_CONFIRMATION, name=call.name, approved=approved
+                    )
+                    if not approved:
+                        results[call.id] = ToolResult.failure(
+                            "policy_denied", f"User declined to run '{call.name}'."
+                        )
+                        continue
+                    executable.append(call)
+                    continue
                 if self._confirm is None:
                     state.status = "needs_input"
                     state.scratchpad["pending_confirmation"] = {

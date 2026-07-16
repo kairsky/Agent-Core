@@ -130,6 +130,25 @@ tools inside the loop. See `examples/mcp_filesystem/`.
 Tracebacks never reach the model; runs never crash on a tool failure — the
 model gets a short typed error and may adapt or finish.
 
+## HTTP API
+
+```bash
+pip install -e ".[openai,api]"
+agent-core serve --port 8000
+```
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /runs` `{"goal": ...}` | start a run in the background (202) |
+| `GET /runs/{id}` | live status, steps, usage, final answer |
+| `POST /runs/{id}/confirm` `{"approved": bool}` | resume a run paused on a dangerous tool |
+| `GET /runs/{id}/trace` | the run's trace events as JSON |
+
+There is no confirm callback in server mode: a dangerous tool call flips the
+run to `status=needs_input` (with the pending call visible in `GET /runs/{id}`)
+until a human posts a verdict. The resumed run appends to the same trace file,
+recording a `run.resumed` event. Resume currently supports the `react` loop.
+
 ## Evals
 
 Measure agent behavior instead of guessing. A suite is a YAML file of goals
@@ -162,5 +181,5 @@ UPDATE_GOLDEN=1 pytest tests/test_golden_traces.py   # regenerate golden traces
 
 ## Roadmap
 
-- v1.1: `agent-core replay` diffing
-- v2: vector memory, HTTP API (`needs_input` → `POST /runs/{id}/confirm`), OTel export
+- `agent-core replay` diffing, resume for the plan_execute loop
+- vector memory, run persistence across server restarts, OTel export

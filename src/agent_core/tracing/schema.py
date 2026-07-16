@@ -16,6 +16,7 @@ CONTENT_PREVIEW_CHARS = 200
 
 class EventType(StrEnum):
     RUN_STARTED = "run.started"
+    RUN_RESUMED = "run.resumed"
     STEP_STARTED = "step.started"
     STEP_FINISHED = "step.finished"
     PLAN_CREATED = "plan.created"

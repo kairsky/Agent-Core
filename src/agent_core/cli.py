@@ -78,6 +78,35 @@ def _latest_trace(trace_dir: Path = Path("traces")) -> Path | None:
     return traces[-1] if traces else None
 
 
+async def _serve(config_path: Path | None, host: str, port: int) -> int:
+    try:
+        import uvicorn
+    except ImportError:
+        print("error: serving requires uvicorn: pip install 'agent-core[api]'", file=sys.stderr)
+        return 1
+
+    from agent_core.api import create_app
+
+    config = (
+        AgentConfig.from_yaml(config_path) if config_path else AgentConfig(model="gpt-4.1-mini")
+    )
+    if config.tracing_path is None:
+        config.tracing_path = Path("traces")
+    _load_dotenv()
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("error: OPENAI_API_KEY is not set.", file=sys.stderr)
+        return 1
+
+    from agent_core.llm.openai_provider import OpenAIProvider
+
+    # No confirm callback: dangerous tools pause the run until POST /runs/{id}/confirm.
+    async with Agent(config, OpenAIProvider()) as agent:
+        app = create_app(agent)
+        server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="info"))
+        await server.serve()
+    return 0
+
+
 async def _eval(suite_path: Path, output_dir: Path) -> int:
     from agent_core.evals import EvalRunner, EvalSuite, format_report
 
@@ -161,11 +190,18 @@ def main(argv: list[str] | None = None) -> int:
         "--output-dir", type=Path, default=Path("eval_runs"), help="workspaces and traces go here"
     )
 
+    serve_parser = subparsers.add_parser("serve", help="start the HTTP API")
+    serve_parser.add_argument("--config", type=Path, default=None, help="path to agent.yaml")
+    serve_parser.add_argument("--host", default="127.0.0.1")
+    serve_parser.add_argument("--port", type=int, default=8000)
+
     args = parser.parse_args(argv)
     if args.command == "run":
         return asyncio.run(_run(args.goal, args.config, args.trace_dir))
     if args.command == "eval":
         return asyncio.run(_eval(args.suite, args.output_dir))
+    if args.command == "serve":
+        return asyncio.run(_serve(args.config, args.host, args.port))
     return _replay(args.trace)
 
 
