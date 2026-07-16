@@ -1,0 +1,12 @@
+{"payload": {"config_digest": "<volatile>", "goal": "Loop forever", "model": "scripted"}, "schema_version": "1.0", "step": 0, "type": "run.started"}
+{"payload": {"step": 1}, "schema_version": "1.0", "step": 1, "type": "step.started"}
+{"payload": {"content_preview": null, "finish_reason": "stop", "has_tool_calls": true, "model": "scripted", "usage": {"in": 10, "out": 5}}, "schema_version": "1.0", "step": 1, "type": "llm.completed"}
+{"payload": {"arguments": {"expression": "1+1"}, "name": "calculator", "tool_call_id": "c"}, "schema_version": "1.0", "step": 1, "type": "tool.requested"}
+{"payload": {"content_preview": "2", "error_type": null, "latency_ms": "<volatile>", "name": "calculator", "ok": true, "tool_call_id": "c"}, "schema_version": "1.0", "step": 1, "type": "tool.executed"}
+{"payload": {"step": 1}, "schema_version": "1.0", "step": 1, "type": "step.finished"}
+{"payload": {"step": 2}, "schema_version": "1.0", "step": 2, "type": "step.started"}
+{"payload": {"content_preview": null, "finish_reason": "stop", "has_tool_calls": true, "model": "scripted", "usage": {"in": 10, "out": 5}}, "schema_version": "1.0", "step": 2, "type": "llm.completed"}
+{"payload": {"arguments": {"expression": "1+1"}, "name": "calculator", "tool_call_id": "c"}, "schema_version": "1.0", "step": 2, "type": "tool.requested"}
+{"payload": {"content_preview": "2", "error_type": null, "latency_ms": "<volatile>", "name": "calculator", "ok": true, "tool_call_id": "c"}, "schema_version": "1.0", "step": 2, "type": "tool.executed"}
+{"payload": {"step": 2}, "schema_version": "1.0", "step": 2, "type": "step.finished"}
+{"payload": {"final_answer": null, "status": "failed", "steps": 2, "stop_reason": "max_steps", "usage_total": {"cost_usd": 0.0, "tokens_in": 20, "tokens_out": 10}}, "schema_version": "1.0", "step": 2, "type": "run.finished"}

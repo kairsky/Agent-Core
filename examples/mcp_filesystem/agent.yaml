@@ -1,0 +1,16 @@
+# MCP filesystem example. Requires Node.js (npx) and an OpenAI key.
+#   agent-core run "List files in the workspace and summarize them" --config examples/mcp_filesystem/agent.yaml
+model: gpt-4.1-mini
+max_steps: 10
+system_prompt: >
+  You are a filesystem assistant. Use the fs__* tools to inspect files.
+  Answer in plain text when done.
+mcp_servers:
+  - name: fs
+    transport: stdio
+    command: ["npx", "-y", "@modelcontextprotocol/server-filesystem", "./workspace"]
+tools:
+  allow: ["fs__*", "calculator"]
+  deny: ["fs__delete*", "fs__move*"]
+workspace: workspace
+tracing_path: traces

@@ -1,0 +1,13 @@
+# Config for a real run with OpenAI:
+#   agent-core run "Calculate 17*19 and explain" --config examples/minimal_react/agent.yaml
+model: gpt-4.1-mini
+temperature: 0.0
+max_steps: 8
+system_prompt: >
+  You are a careful assistant. Use tools for arithmetic and file operations.
+  When you are done, answer in plain text without tool calls.
+tools:
+  allow: ["calculator", "get_current_time", "read_file", "write_file"]
+require_confirmation_for: ["write_file"]
+workspace: workspace
+tracing_path: traces
