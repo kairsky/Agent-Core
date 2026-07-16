@@ -1,0 +1,41 @@
+# Basic eval suite: agent-core eval evals/basic.yaml
+name: basic
+auto_approve: true # write_file approved automatically; fine for sandboxed evals
+agent:
+  model: gpt-4.1-mini
+  temperature: 0.0
+  max_steps: 10
+  tools:
+    allow: ["calculator", "get_current_time", "read_file", "write_file"]
+
+tasks:
+  - id: arithmetic
+    goal: "What is 17*19? Use the calculator."
+    expect:
+      contains: "323"
+      max_steps: 3
+
+  - id: multi_step_math
+    goal: "Compute (12+34)*5 and then divide the result by 2. Give the final number."
+    expect:
+      contains: "115"
+      max_steps: 5
+
+  - id: write_result
+    goal: "Calculate 2**10 and write only the number to a file named power.txt."
+    expect:
+      contains: "1024"
+      file:
+        path: power.txt
+        text: "1024"
+
+  - id: read_then_answer
+    goal: "A file named data.txt may or may not exist. If it does not exist, reply exactly: NO DATA"
+    expect:
+      regex: "NO DATA"
+
+  - id: no_tool_needed
+    goal: "Reply with exactly one word: pong"
+    expect:
+      regex: "(?i)pong"
+      max_steps: 2

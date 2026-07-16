@@ -78,6 +78,24 @@ def _latest_trace(trace_dir: Path = Path("traces")) -> Path | None:
     return traces[-1] if traces else None
 
 
+async def _eval(suite_path: Path, output_dir: Path) -> int:
+    from agent_core.evals import EvalRunner, EvalSuite, format_report
+
+    suite = EvalSuite.from_yaml(suite_path)
+    _load_dotenv()
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("error: OPENAI_API_KEY is not set.", file=sys.stderr)
+        return 1
+
+    from agent_core.llm.openai_provider import OpenAIProvider
+
+    provider = OpenAIProvider()
+    runner = EvalRunner(suite, lambda task: provider, output_dir)
+    results = await runner.run()
+    print(format_report(suite.name, results))
+    return 0 if all(r.passed for r in results) else 1
+
+
 def _replay(trace_path: Path | None) -> int:
     """Pretty-print a JSONL trace, one line per event."""
     if trace_path is None:
@@ -137,9 +155,17 @@ def main(argv: list[str] | None = None) -> int:
         "trace", type=Path, nargs="?", default=None, help="trace file (default: latest in ./traces)"
     )
 
+    eval_parser = subparsers.add_parser("eval", help="run an eval suite")
+    eval_parser.add_argument("suite", type=Path, help="path to suite yaml")
+    eval_parser.add_argument(
+        "--output-dir", type=Path, default=Path("eval_runs"), help="workspaces and traces go here"
+    )
+
     args = parser.parse_args(argv)
     if args.command == "run":
         return asyncio.run(_run(args.goal, args.config, args.trace_dir))
+    if args.command == "eval":
+        return asyncio.run(_eval(args.suite, args.output_dir))
     return _replay(args.trace)
 
 

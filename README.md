@@ -130,6 +130,27 @@ tools inside the loop. See `examples/mcp_filesystem/`.
 Tracebacks never reach the model; runs never crash on a tool failure — the
 model gets a short typed error and may adapt or finish.
 
+## Evals
+
+Measure agent behavior instead of guessing. A suite is a YAML file of goals
+plus expectations (answer substring/regex, produced files, step ceilings):
+
+```bash
+agent-core eval evals/basic.yaml
+```
+
+```
+task                 result  steps tools    tokens   cost $  time s
+-------------------------------------------------------------------
+arithmetic           PASS        2     1       484   0.0002     2.7
+write_result         PASS        3     2       816   0.0004     3.2
+...
+passed 5/5   total cost $0.0012
+```
+
+Each task runs in its own workspace with its own trace under `eval_runs/`.
+Exit code is non-zero if any task fails, so suites slot into CI directly.
+
 ## Development
 
 ```bash

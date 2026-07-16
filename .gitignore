@@ -10,3 +10,4 @@ venv/
 .ruff_cache/
 traces/
 workspace/
+eval_runs/
