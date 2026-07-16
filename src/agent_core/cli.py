@@ -14,9 +14,13 @@ from agent_core.agent import Agent
 from agent_core.config import AgentConfig
 
 
-def _load_dotenv(path: Path = Path(".env")) -> None:
-    """Load KEY=VALUE pairs from .env into os.environ (existing vars win)."""
-    if not path.is_file():
+def _load_dotenv() -> None:
+    """Load KEY=VALUE pairs from the nearest .env (cwd or ancestors) into os.environ."""
+    for directory in [Path.cwd(), *Path.cwd().parents]:
+        path = directory / ".env"
+        if path.is_file():
+            break
+    else:
         return
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()

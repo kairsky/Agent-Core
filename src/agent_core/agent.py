@@ -20,7 +20,7 @@ from agent_core.tools.builtin import builtin_tools
 from agent_core.tools.mcp_adapter import McpConnection
 from agent_core.tools.registry import ToolRegistry
 from agent_core.tools.runtime import ToolRuntime
-from agent_core.tracing import JsonlTracer, NullTracer, Tracer
+from agent_core.tracing import JsonlTracer, NullTracer, RedactingTracer, Tracer
 from agent_core.types import Message, system, user
 
 
@@ -79,7 +79,7 @@ class Agent:
         tracer: Tracer = NullTracer()
         if self._trace_dir is not None:
             trace_path = self._trace_dir / f"{run_id}.jsonl"
-            tracer = JsonlTracer(trace_path)
+            tracer = RedactingTracer(JsonlTracer(trace_path))
 
         messages = [system(self._config.system_prompt), *(session_messages or []), user(goal)]
         state = AgentState(run_id=run_id, goal=goal, messages=messages)
